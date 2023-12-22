@@ -9,7 +9,6 @@ Exchange rates for the different currencies supported by Uphold.
 - List all available currencies dynamically;
 - Uphold Javascript SDK;
 - Linting tools;
-- Uphold design system;
 
 ## Installation
 
