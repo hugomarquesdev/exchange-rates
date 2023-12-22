@@ -1,19 +1,9 @@
 import React from "react";
-import styled from "styled-components";
-
-const CurrencyListContainer = styled.div`
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem 4rem;
-    padding: 10px 0;
-`;
-
-const CurrencyRowContainer = styled.div`
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    border: 1px solid;
-`;
+import PropTypes from "prop-types";
+import {
+    CurrencyListContainer,
+    CurrencyRowContainer,
+} from "../styles/CurrencyListStyles";
 
 const CurrencyList = ({
     currenciesList,
@@ -32,7 +22,9 @@ const CurrencyList = ({
                                     quoteCurrency
                                 )}
                             </span>
-                            <span>{quoteCurrency}</span>
+                            <span style={{ fontSize: "1rem" }}>
+                                {quoteCurrency}
+                            </span>
                         </CurrencyRowContainer>
                     )
             )}
@@ -41,3 +33,9 @@ const CurrencyList = ({
 };
 
 export default CurrencyList;
+
+CurrencyList.propTypes = {
+    currenciesList: PropTypes.array.isRequired,
+    calculateExchangeRate: PropTypes.func.isRequired,
+    selectedCurrency: PropTypes.string.isRequired,
+};

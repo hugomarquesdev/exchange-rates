@@ -1,38 +1,18 @@
-import React, { useEffect, useState } from "react";
-import styled from "styled-components";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import upholdSDK from "./utils/upholdSDK";
 import CurrencyInput from "./components/CurrencyInput";
 import CurrencyList from "./components/CurrencyList";
-
-const AppContainer = styled.div`
-    text-align: center;
-    margin: 20px;
-`;
-
-const Title = styled.h1`
-    margin-bottom: 20px;
-`;
+import { debounce } from "lodash";
+import { AppContainer, Description, Loader } from "./styles/AppStyles";
 
 const App = () => {
-    const [amount, setAmount] = useState(() => {
-        return localStorage.getItem("amount") || "1";
-    });
-    const [selectedCurrency, setSelectedCurrency] = useState(() => {
-        return localStorage.getItem("selectedCurrency") || "USD";
-    });
+    const [amount, setAmount] = useState("0");
+    const [selectedCurrency, setSelectedCurrency] = useState("USD");
     const [currenciesList, setCurrenciesList] = useState([]);
     const [data, setData] = useState([]);
-    const [debouncedSelectedCurrency, setDebouncedSelectedCurrency] =
-        useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        localStorage.setItem("amount", amount);
-    }, [amount]);
-
-    useEffect(() => {
-        localStorage.setItem("selectedCurrency", selectedCurrency);
-    }, [selectedCurrency]);
+    const isInitialMount = useRef(true);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -42,7 +22,7 @@ const App = () => {
                 const cacheKey = "currencies";
                 let data = localStorage.getItem(cacheKey);
 
-                if (!data || debouncedSelectedCurrency) {
+                if (!data) {
                     data = await upholdSDK.getTicker();
                     localStorage.setItem(cacheKey, JSON.stringify(data));
                 } else {
@@ -65,32 +45,61 @@ const App = () => {
         };
 
         fetchData();
-    }, [debouncedSelectedCurrency]);
+    }, []);
 
     useEffect(() => {
-        const timeOut = setTimeout(() => {
-            setDebouncedSelectedCurrency(selectedCurrency);
+        const refreshData = debounce(async () => {
+            if (isInitialMount.current) {
+                isInitialMount.current = false;
+                return;
+            }
+
+            try {
+                setIsLoading(true);
+
+                const data = await upholdSDK.getTicker();
+                setData(data);
+                localStorage.setItem("currencies", JSON.stringify(data));
+
+                const currenciesList = data
+                    .map((item) => item.pair.split("-")[1])
+                    .filter((currency) => currency && currency.trim() !== "");
+
+                setCurrenciesList([...new Set(currenciesList)]);
+
+                setIsLoading(false);
+            } catch (error) {
+                console.error("Error refreshing data:", error);
+                setIsLoading(false);
+            }
         }, 500);
 
+        refreshData();
+
         return () => {
-            clearTimeout(timeOut);
+            refreshData.cancel();
         };
-    }, [selectedCurrency]);
+    }, [selectedCurrency, amount]);
 
-    const calculateExchangeRate = (selectedCurrency, quoteCurrency) => {
-        const pair = `${selectedCurrency}-${quoteCurrency}`;
-        const rate = data.find((item) => item.pair === pair);
+    const calculateExchangeRate = useCallback(
+        (selectedCurrency, quoteCurrency) => {
+            const pair = `${selectedCurrency}-${quoteCurrency}`;
+            const rate = data.find((item) => item.pair === pair);
 
-        if (rate && amount) {
-            return (parseFloat(amount) * parseFloat(rate.ask)).toFixed(2);
-        }
-
-        return;
-    };
+            if (rate && amount) {
+                return (parseFloat(amount) * parseFloat(rate.ask)).toFixed(2);
+            }
+        },
+        [data]
+    );
 
     return (
         <AppContainer>
-            <Title>Assessment Challenge</Title>
+            <h1>Currency Converter</h1>
+            <Description>
+                Receive competitive and transparent pricing with no hidden
+                spreads. See how we compare.
+            </Description>
             <CurrencyInput
                 amount={amount}
                 setAmount={setAmount}
@@ -98,14 +107,21 @@ const App = () => {
                 setSelectedCurrency={setSelectedCurrency}
                 currenciesList={currenciesList}
             />
-            {!isLoading && (
+            {!isLoading && amount > 0 && (
                 <CurrencyList
                     currenciesList={currenciesList}
                     calculateExchangeRate={calculateExchangeRate}
                     selectedCurrency={selectedCurrency}
                 />
             )}
-            {isLoading && <span>Loading...</span>}
+            {isLoading && (
+                <Loader>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </Loader>
+            )}
         </AppContainer>
     );
 };

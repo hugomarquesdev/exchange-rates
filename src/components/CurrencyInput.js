@@ -1,20 +1,10 @@
 import React from "react";
-import styled from "styled-components";
-
-const CurrencyInputContainer = styled.div`
-    margin-bottom: 20px;
-`;
-
-const Input = styled.input`
-    padding: 10px;
-    margin-right: 10px;
-    font-size: 16px;
-`;
-
-const Select = styled.select`
-    padding: 10px;
-    font-size: 16px;
-`;
+import PropTypes from "prop-types";
+import {
+    CurrencyInputContainer,
+    Input,
+    Select,
+} from "../styles/CurrencyInputStyles";
 
 const CurrencyInput = ({
     amount,
@@ -29,7 +19,7 @@ const CurrencyInput = ({
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount"
+                placeholder="0.00"
             />
             <Select
                 value={selectedCurrency}
@@ -46,3 +36,11 @@ const CurrencyInput = ({
 };
 
 export default CurrencyInput;
+
+CurrencyInput.propTypes = {
+    amount: PropTypes.string.isRequired,
+    setAmount: PropTypes.func.isRequired,
+    selectedCurrency: PropTypes.string.isRequired,
+    setSelectedCurrency: PropTypes.func.isRequired,
+    currenciesList: PropTypes.array.isRequired,
+};
