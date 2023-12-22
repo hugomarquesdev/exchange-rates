@@ -4,6 +4,13 @@
 
 Exchange rates for the different currencies supported by Uphold.
 
+- React;
+- ES6;
+- List all available currencies dynamically;
+- Uphold Javascript SDK;
+- Linting tools;
+- Uphold design system;
+
 ## Installation
 
 ```bash
